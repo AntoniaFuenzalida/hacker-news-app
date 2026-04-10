@@ -1,5 +1,3 @@
-// Adapta comentarios de la API a una estructura uniforme,
-// evitando depender directamente del formato original.
 export function adaptComment(item) {
   if (!item) return null;
 

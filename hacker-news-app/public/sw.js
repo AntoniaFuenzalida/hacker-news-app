@@ -1,5 +1,5 @@
-const STATIC_CACHE = "static-v5";
-const API_CACHE = "hn-api-v5";
+const STATIC_CACHE = "static-v6";
+const API_CACHE = "hn-api-v6";
 const MAX_API_ENTRIES = 10;
 
 // Archivos necesarios para que la interfaz pueda cargarse sin conexión.
@@ -9,7 +9,7 @@ const APP_SHELL = [
   "/index.html",
   "/offline.html",
   "/favicon.svg",
-  "/assets/index-CQ6EEpAB.js",
+  "/assets/index-OnuggRlN.js",
   "/assets/index-nqMpL4T3.css",
 ];
 

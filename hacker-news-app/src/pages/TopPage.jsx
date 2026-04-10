@@ -16,8 +16,6 @@ import StoryCard from "../components/StoryCard";
 
 const TOP_CACHE_KEY = "hn_top_cache";
 
-// Página principal de la aplicación.
-// Muestra las mejores historias de Hacker News con paginación de 50 elementos.
 export default function TopPage() {
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,24 +33,20 @@ export default function TopPage() {
         setError("");
         setOfflineMessage("");
 
-        // Obtiene todos los IDs de las mejores historias.
         const ids = await getBestStories();
         setTotalStories(ids.length);
 
-        // Calcula el rango correspondiente a la página actual.
         const start = (page - 1) * ITEMS_PER_PAGE;
         const end = start + ITEMS_PER_PAGE;
         const paginatedIds = ids.slice(start, end);
 
-        // Obtiene las historias de la página actual ya adaptadas al modelo de UI.
         const validStories = await getStoriesByIds(paginatedIds);
-        setStories(validStories);
+        setStories(validStories.filter(Boolean));
 
-        // Guarda una copia local de la página actual como respaldo para modo offline.
         localStorage.setItem(
           `${TOP_CACHE_KEY}_${page}`,
           JSON.stringify({
-            stories: validStories,
+            stories: validStories.filter(Boolean),
             totalStories: ids.length,
             page,
             savedAt: new Date().toISOString(),
@@ -63,12 +57,11 @@ export default function TopPage() {
       } catch (err) {
         console.error(err);
 
-        // Si la petición falla, se intenta recuperar la última versión almacenada localmente.
         const cached = localStorage.getItem(`${TOP_CACHE_KEY}_${page}`);
 
         if (cached) {
           const parsed = JSON.parse(cached);
-          setStories(parsed.stories || []);
+          setStories((parsed.stories || []).filter(Boolean));
           setTotalStories(parsed.totalStories || 0);
           setOfflineMessage(
             "Mostrando historias guardadas previamente en este dispositivo."
@@ -84,12 +77,10 @@ export default function TopPage() {
     fetchStories();
   }, [page]);
 
-  // Memoiza el total de páginas para evitar recalcularlo en cada render.
   const totalPages = useMemo(() => {
     return Math.ceil(totalStories / ITEMS_PER_PAGE);
   }, [totalStories]);
 
-  // Handler memoizado para evitar recrear la función en cada render.
   const handlePageChange = useCallback((_, value) => {
     setPage(value);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -151,7 +142,6 @@ export default function TopPage() {
             useFlexGap
             sx={{ mb: 4 }}
           >
-            {/* Resumen rápido de la página cargada */}
             <Chip
               label={`${stories.length} historias en esta página`}
               sx={{
@@ -203,7 +193,7 @@ export default function TopPage() {
 
         {!loading && !error && (
           <Stack spacing={2.5}>
-            {stories.map((story) => (
+            {stories.filter(Boolean).map((story) => (
               <StoryCard key={story.id} story={story} />
             ))}
           </Stack>

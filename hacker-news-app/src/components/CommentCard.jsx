@@ -1,20 +1,9 @@
 import { memo } from "react";
-import { Link } from "react-router-dom";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Stack,
-  Typography,
-} from "@mui/material";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import ChatIcon from "@mui/icons-material/Chat";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import PersonIcon from "@mui/icons-material/Person";
+import { Box, Card, CardContent, Divider, Stack, Typography } from "@mui/material";
 
-function StoryCard({ story }) {
+function CommentCard({ comment }) {
+  if (!comment || !comment.id) return null;
+
   return (
     <Card
       elevation={0}
@@ -23,90 +12,49 @@ function StoryCard({ story }) {
         background: "rgba(255,255,255,0.04)",
         border: "1px solid rgba(255,255,255,0.08)",
         color: "white",
+        transition: "transform 0.2s ease, border-color 0.2s ease",
+        "&:hover": {
+          transform: "translateY(-2px)",
+          borderColor: "rgba(96,165,250,0.35)",
+        },
       }}
     >
       <CardContent sx={{ p: 3 }}>
         <Stack spacing={2}>
           <Box>
-            {story.url ? (
-              <Button
-                component="a"
-                href={story.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                endIcon={<OpenInNewIcon />}
-                sx={{
-                  p: 0,
-                  textTransform: "none",
-                  justifyContent: "flex-start",
-                  alignItems: "flex-start",
-                  color: "#93c5fd",
-                  fontSize: "1.2rem",
-                  fontWeight: 700,
-                  lineHeight: 1.35,
-                  "&:hover": {
-                    background: "transparent",
-                    color: "#bfdbfe",
-                  },
-                }}
-              >
-                {story.title}
-              </Button>
-            ) : (
-              <Typography variant="h6" fontWeight={700} sx={{ color: "#e5e7eb" }}>
-                {story.title}
-              </Typography>
-            )}
+            <Typography variant="subtitle1" fontWeight={700}>
+              {comment.by || "Usuario desconocido"}
+            </Typography>
           </Box>
 
-          <Stack direction="row" spacing={1.2} flexWrap="wrap" useFlexGap>
-            <Chip
-              icon={<PersonIcon />}
-              label={story.by}
-              sx={{
-                bgcolor: "rgba(255,255,255,0.06)",
-                color: "white",
-              }}
-            />
-            <Chip
-              icon={<TrendingUpIcon />}
-              label={`Score: ${story.score}`}
-              sx={{
-                bgcolor: "rgba(255,255,255,0.06)",
-                color: "white",
-              }}
-            />
-            <Chip
-              icon={<ChatIcon />}
-              label={`${story.descendants} comentarios`}
-              sx={{
-                bgcolor: "rgba(255,255,255,0.06)",
-                color: "white",
-              }}
-            />
-          </Stack>
+          <Divider sx={{ borderColor: "rgba(255,255,255,0.08)" }} />
 
-          <Box>
-            <Button
-              component={Link}
-              to={`/story/${story.id}`}
-              variant="contained"
-              startIcon={<ChatIcon />}
-              sx={{
-                borderRadius: 3,
-                px: 2.2,
-                py: 1,
-                textTransform: "none",
-                fontWeight: 700,
-              }}
-            >
-              Ver comentarios
-            </Button>
-          </Box>
+          <Box
+            sx={{
+              color: "rgba(255,255,255,0.9)",
+              lineHeight: 1.7,
+              "& a": { color: "#93c5fd" },
+              "& pre": {
+                overflowX: "auto",
+                p: 2,
+                borderRadius: 2,
+                backgroundColor: "rgba(255,255,255,0.05)",
+              },
+              "& code": {
+                fontFamily: "monospace",
+              },
+              "& p": {
+                mb: 1,
+              },
+            }}
+            dangerouslySetInnerHTML={{
+              __html: comment.text || "Sin contenido",
+            }}
+          />
         </Stack>
       </CardContent>
     </Card>
   );
 }
 
-export default memo(StoryCard);
+export default memo(CommentCard);

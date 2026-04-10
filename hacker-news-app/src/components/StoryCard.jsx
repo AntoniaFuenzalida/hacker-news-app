@@ -14,9 +14,9 @@ import ChatIcon from "@mui/icons-material/Chat";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import PersonIcon from "@mui/icons-material/Person";
 
-// Componente presentacional para mostrar una historia individual.
-// Se memoiza para evitar renders innecesarios cuando sus props no cambian.
 function StoryCard({ story }) {
+  if (!story || !story.id) return null;
+
   return (
     <Card
       elevation={0}
@@ -30,9 +30,7 @@ function StoryCard({ story }) {
       <CardContent sx={{ p: 3 }}>
         <Stack spacing={2}>
           <Box>
-            {/* Si la historia tiene URL, se permite navegar al artículo original.
-                En caso contrario, solo se muestra el título. */}
-            {story.url ? (
+            {story?.url ? (
               <Button
                 component="a"
                 href={story.url}
@@ -54,24 +52,19 @@ function StoryCard({ story }) {
                   },
                 }}
               >
-                {story.title}
+                {story?.title || "Sin título"}
               </Button>
             ) : (
-              <Typography
-                variant="h6"
-                fontWeight={700}
-                sx={{ color: "#e5e7eb" }}
-              >
-                {story.title}
+              <Typography variant="h6" fontWeight={700} sx={{ color: "#e5e7eb" }}>
+                {story?.title || "Sin título"}
               </Typography>
             )}
           </Box>
 
-          {/* Metadatos principales de la historia */}
           <Stack direction="row" spacing={1.2} flexWrap="wrap" useFlexGap>
             <Chip
               icon={<PersonIcon />}
-              label={story.by}
+              label={story?.by || "Desconocido"}
               sx={{
                 bgcolor: "rgba(255,255,255,0.06)",
                 color: "white",
@@ -79,7 +72,7 @@ function StoryCard({ story }) {
             />
             <Chip
               icon={<TrendingUpIcon />}
-              label={`Score: ${story.score}`}
+              label={`Score: ${story?.score ?? 0}`}
               sx={{
                 bgcolor: "rgba(255,255,255,0.06)",
                 color: "white",
@@ -87,7 +80,7 @@ function StoryCard({ story }) {
             />
             <Chip
               icon={<ChatIcon />}
-              label={`${story.descendants} comentarios`}
+              label={`${story?.descendants ?? 0} comentarios`}
               sx={{
                 bgcolor: "rgba(255,255,255,0.06)",
                 color: "white",
@@ -95,7 +88,6 @@ function StoryCard({ story }) {
             />
           </Stack>
 
-          {/* Navegación interna hacia la vista de detalle de la historia */}
           <Box>
             <Button
               component={Link}

@@ -1,5 +1,3 @@
-// Adapta la respuesta cruda de la API de Hacker News
-// a un modelo consistente para la capa de presentación.
 export function adaptStory(item) {
   if (!item) return null;
 

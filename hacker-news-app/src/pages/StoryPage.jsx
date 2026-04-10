@@ -19,15 +19,15 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ChatIcon from "@mui/icons-material/Chat";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import PersonIcon from "@mui/icons-material/Person";
+
 import { getStoryById, getCommentsByIds } from "../services/hnApi";
 import CommentCard from "../components/CommentCard";
 
 const STORY_CACHE_KEY = "hn_story_cache";
 
-// Página de detalle de una historia.
-// Obtiene la historia desde la URL y carga sus comentarios principales.
 export default function StoryPage() {
   const { id } = useParams();
+
   const [story, setStory] = useState(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,27 +36,34 @@ export default function StoryPage() {
   const [offlineMessage, setOfflineMessage] = useState("");
 
   useEffect(() => {
-    async function fetchStoryAndComments() {
+    async function fetchData() {
       try {
         setLoading(true);
         setCommentsLoading(true);
         setError("");
         setOfflineMessage("");
 
+        if (!id) {
+          throw new Error("ID inválido");
+        }
+
         const storyData = await getStoryById(id);
+
+        if (!storyData) {
+          throw new Error("Historia no encontrada");
+        }
+
         setStory(storyData);
 
-        const commentIds = storyData?.kids || [];
+        const commentIds = storyData.kids || [];
         const commentsData = await getCommentsByIds(commentIds);
 
-        // Se filtran comentarios inválidos o marcados como eliminados.
         const validComments = commentsData.filter(
-          (comment) => comment && !comment.deleted && !comment.dead
+          (c) => c && !c.deleted && !c.dead
         );
 
         setComments(validComments);
 
-        // Se almacena una copia local para reutilizarla en modo offline.
         localStorage.setItem(
           `${STORY_CACHE_KEY}_${id}`,
           JSON.stringify({
@@ -68,15 +75,15 @@ export default function StoryPage() {
       } catch (err) {
         console.error(err);
 
-        // Si falla la red, se intenta recuperar la última versión guardada.
         const cached = localStorage.getItem(`${STORY_CACHE_KEY}_${id}`);
 
         if (cached) {
           const parsed = JSON.parse(cached);
+
           setStory(parsed.story || null);
           setComments(parsed.comments || []);
           setOfflineMessage(
-            "Mostrando historia y comentarios guardados previamente en este dispositivo."
+            "Mostrando contenido guardado previamente (modo offline)."
           );
         } else {
           setError("No se pudo cargar la historia.");
@@ -87,7 +94,7 @@ export default function StoryPage() {
       }
     }
 
-    fetchStoryAndComments();
+    fetchData();
   }, [id]);
 
   if (loading) {
@@ -148,15 +155,43 @@ export default function StoryPage() {
           borderBottom: "1px solid rgba(255,255,255,0.08)",
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ justifyContent: "space-between", minHeight: 72 }}>
           <Button
             component={Link}
             to="/top"
             startIcon={<ArrowBackIcon />}
-            sx={{ color: "white", textTransform: "none", fontWeight: 700 }}
+            sx={{
+              color: "white",
+              textTransform: "none",
+              fontWeight: 700,
+              borderRadius: 3,
+              px: 2,
+            }}
           >
-            Volver a Top Stories
+            Volver
           </Button>
+
+          <Typography
+            variant="h6"
+            fontWeight={800}
+            sx={{
+              color: "white",
+              textAlign: "center",
+              flex: 1,
+            }}
+          >
+            Detalle de historia
+          </Typography>
+
+          <Chip
+            label={`ID: ${story.id}`}
+            sx={{
+              bgcolor: "rgba(59,130,246,0.18)",
+              color: "#bfdbfe",
+              border: "1px solid rgba(59,130,246,0.28)",
+              fontWeight: 600,
+            }}
+          />
         </Toolbar>
       </AppBar>
 
@@ -170,11 +205,11 @@ export default function StoryPage() {
         <Card
           elevation={0}
           sx={{
+            mb: 4,
             borderRadius: 4,
             background: "rgba(255,255,255,0.04)",
             border: "1px solid rgba(255,255,255,0.08)",
             color: "white",
-            mb: 4,
           }}
         >
           <CardContent sx={{ p: 4 }}>
@@ -182,16 +217,18 @@ export default function StoryPage() {
               <Typography
                 variant="h4"
                 fontWeight={800}
-                sx={{ lineHeight: 1.2 }}
+                sx={{
+                  lineHeight: 1.2,
+                  color: "white",
+                }}
               >
                 {story.title}
               </Typography>
 
-              {/* Resumen rápido de la historia */}
               <Stack direction="row" spacing={1.2} flexWrap="wrap" useFlexGap>
                 <Chip
                   icon={<PersonIcon />}
-                  label={story.by}
+                  label={story.by || "Desconocido"}
                   sx={{
                     bgcolor: "rgba(255,255,255,0.06)",
                     color: "white",
@@ -199,7 +236,7 @@ export default function StoryPage() {
                 />
                 <Chip
                   icon={<TrendingUpIcon />}
-                  label={`Score: ${story.score}`}
+                  label={`Score: ${story.score ?? 0}`}
                   sx={{
                     bgcolor: "rgba(255,255,255,0.06)",
                     color: "white",
@@ -207,7 +244,7 @@ export default function StoryPage() {
                 />
                 <Chip
                   icon={<ChatIcon />}
-                  label={`Comentarios: ${story.descendants}`}
+                  label={`${story.descendants ?? 0} comentarios`}
                   sx={{
                     bgcolor: "rgba(255,255,255,0.06)",
                     color: "white",
@@ -215,7 +252,6 @@ export default function StoryPage() {
                 />
               </Stack>
 
-              {/* Acceso al artículo original si existe URL */}
               {story.url && (
                 <Box>
                   <Button
@@ -227,6 +263,8 @@ export default function StoryPage() {
                     endIcon={<OpenInNewIcon />}
                     sx={{
                       borderRadius: 3,
+                      px: 2.5,
+                      py: 1,
                       textTransform: "none",
                       fontWeight: 700,
                     }}
@@ -240,10 +278,14 @@ export default function StoryPage() {
         </Card>
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" fontWeight={800} sx={{ color: "white" }}>
+          <Typography
+            variant="h5"
+            fontWeight={800}
+            sx={{ color: "white", mb: 0.5 }}
+          >
             Comentarios
           </Typography>
-          <Typography sx={{ color: "rgba(255,255,255,0.7)", mt: 0.5 }}>
+          <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
             Comentarios principales de la historia seleccionada.
           </Typography>
         </Box>
@@ -266,12 +308,12 @@ export default function StoryPage() {
           </Box>
         ) : comments.length === 0 ? (
           <Alert severity="info" sx={{ borderRadius: 3 }}>
-            Esta historia no tiene comentarios.
+            No hay comentarios.
           </Alert>
         ) : (
           <Stack spacing={2}>
-            {comments.map((comment) => (
-              <CommentCard key={comment.id} comment={comment} />
+            {comments.map((c) => (
+              <CommentCard key={c.id} comment={c} />
             ))}
           </Stack>
         )}
